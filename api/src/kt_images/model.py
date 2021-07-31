@@ -1,7 +1,8 @@
-from typing import Generator, List, Optional, Tuple, Any
+from typing import List, Optional
 
 from pydantic import BaseModel
 
+from kt_images.settings import Settings
 
 class Image(BaseModel):
     """Image entity dataclass"""
@@ -48,8 +49,10 @@ class Model:
         """Generator that yields chunked images list as list of tuple"""
         pool = await self.app['db'].connection_pool()
         make_dict = self.app['db'].make_dict
+        config: Settings = self.app['config']
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
+                cur.arraysize = config.postgres_arraysize
                 await cur.execute("select image_id, filename, tags from images")
                 while True:
                     chunk = await cur.fetchmany()

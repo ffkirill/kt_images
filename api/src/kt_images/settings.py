@@ -3,7 +3,7 @@ from os import environ
 
 
 POSTGRES_DSN = 'dbname=postgres user=postgres password=postgres host=172.17.0.1'
-
+POSTGRES_FETCHMANY_ARRAYSIZE = 10
 
 def env(key: str, default: str):
     return environ.get(key, default)
@@ -17,6 +17,8 @@ class Settings:
     host: str
     port: int
     postgres_dsn: str
+    postgres_arraysize: int
+
     
     def __init__(self, argv):
         parser = argparse.ArgumentParser(description='Images http storage backend.')
@@ -35,6 +37,11 @@ class Settings:
             help='postgres data source name',
             default=env('POSTGRES_DSN',
                         POSTGRES_DSN))
+        
+        parser.add_argument('--postgres_arraysize', dest='postgres_arraysize', type=int,
+            help='postgres chunk arraysize',
+            default=env('POSTGRES_FETCHMANY_ARRAYSIZE',
+                        POSTGRES_FETCHMANY_ARRAYSIZE))
 
         args = parser.parse_args(argv)
         for k in args.__dict__.keys():
