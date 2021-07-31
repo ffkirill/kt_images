@@ -43,7 +43,8 @@ class ImageCollectionView(PydanticView):
             await response.write(b'[')
             total_chunks = 0
             async for chunk in images_chunks:
-                await response.write(json.dumps([image for image in chunk]).encode())
+                for image in chunk:
+                    await response.write(json.dumps(image).encode())
                 await response.write(b', ')
                 total_chunks += 1
             await response.write(json.dumps({'totalChunks': total_chunks}).encode())

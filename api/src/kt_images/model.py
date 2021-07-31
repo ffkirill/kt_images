@@ -47,12 +47,13 @@ class Model:
     async def list_images(self, tags: Optional[str] = None):# -> Generator[List[Tuple]]:
         """Generator that yields chunked images list as list of tuple"""
         pool = await self.app['db'].connection_pool()
+        make_dict = self.app['db'].make_dict
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("select image_id, filename, tags from images")
                 while True:
-                    res = await cur.fetchmany()
-                    if res:
-                        yield res
+                    chunk = await cur.fetchmany()
+                    if chunk:
+                        yield [make_dict(res, cur.description) for res in chunk]
                     else:
                         break
