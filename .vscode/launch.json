@@ -10,7 +10,8 @@
             "type": "python",
             "request": "launch",
             "module": "kt_images",
-            "cwd": "${workspaceFolder}/api/src"
+            "cwd": "${workspaceFolder}/api/src",
+            "justMyCode": false,
             
         }
     ]

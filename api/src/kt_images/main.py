@@ -1,17 +1,20 @@
 import logging
+from typing import Union, TypedDict
 from aiohttp import web
 
 from kt_images.db import init_pg, close_pg
 
 from kt_images.routes import setup_routes
 from kt_images.model import Model
+from kt_images.db import PgService
 from kt_images.settings import Settings
 from kt_images.middleware import process_errors
+from kt_images.typing import KtImagesApp
 
 
 async def init_app(config: Settings):
     logging.basicConfig(level=logging.DEBUG)
-    app = web.Application(middlewares=[process_errors])
+    app: KtImagesApp = web.Application(middlewares=[process_errors])
     app.on_startup.append(init_pg)
     app.on_cleanup.append(close_pg)
     app['config'] = config

@@ -2,10 +2,10 @@ import json
 from typing import Union, Optional, List, Any
 
 from aiohttp import web
-from aiohttp.web_exceptions import HTTPException, HTTPServerError
 from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
-from aiohttp_pydantic.oas.typing import r200, r201, r204, r404
+from pydantic import Field
+from aiohttp_pydantic.oas.typing import r200, r201, r404
 
 
 from kt_images.model import Image
@@ -23,9 +23,10 @@ class HTTPStreamedException(Exception):
 
 
 class ImageCollectionView(PydanticView):
-    async def get(self, tags: Optional[str] = None) -> r200[List[Image]]:
+    async def get(self, tags: Optional[Union[List[int],int]] = None) -> r200[List[Image]]:
         """
         List Images entities, optionally filter by tags
+        Response is streamed due to performance consideration
         See https://github.com/tolgahanuzun/Streaming_API/blob/master/chunked_app.py
         for streamed response details.
         The streamed data is followed by totals object info.
@@ -42,11 +43,13 @@ class ImageCollectionView(PydanticView):
             # Manually form chunked json
             await response.write(b'[')
             total_chunks = 0
+            total_images = 0
             async for chunk in images_chunks:
                 await response.write(json.dumps(chunk).encode())
                 await response.write(b', ')
                 total_chunks += 1
-            await response.write(json.dumps({'totalChunks': total_chunks}).encode())
+                total_images += len(chunk)
+            await response.write(json.dumps({'totalImages': total_images, 'totalChunks': total_chunks}).encode())
             await response.write(b']')
             await response.write_eof()
             return response
@@ -57,7 +60,6 @@ class ImageCollectionView(PydanticView):
         """Create a new image"""
         return web.json_response(
             await self.request.app['model'].add_image(image))
-
 
 
 class ImageItemView(PydanticView):
