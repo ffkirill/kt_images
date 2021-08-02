@@ -60,7 +60,7 @@ class Model:
             params = (tags, )
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
-                cur.arraysize = config.postgres_arraysize
+                cur.arraysize = config.pg_arraysize
                 await cur.execute(sql_query, params)
                 while True:
                     chunk = await cur.fetchmany()

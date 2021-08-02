@@ -28,7 +28,7 @@ class PgService:
 
 
 async def init_pg(app: web.Application):
-    app['db'] = PgService(app['config'].postgres_dsn)
+    app['db'] = PgService(app['config'].pg_dsn)
 
 
 async def close_pg(app: web.Application):
