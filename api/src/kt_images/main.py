@@ -1,15 +1,14 @@
 import logging
-from typing import Union, TypedDict
 from aiohttp import web
 
 from kt_images.db import init_pg, close_pg
 
 from kt_images.routes import setup_routes
 from kt_images.model import Model
-from kt_images.db import PgService
 from kt_images.settings import Settings
 from kt_images.middleware import process_errors
 from kt_images.typing import KtImagesApp
+from kt_images.settings import Settings
 
 
 async def init_app(config: Settings):
@@ -27,4 +26,3 @@ def main(argv):
     config = Settings(argv)
     app = init_app(config)
     web.run_app(app, host=config.host, port=config.port)
-
