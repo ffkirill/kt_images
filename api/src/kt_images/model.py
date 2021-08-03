@@ -56,7 +56,7 @@ class Model:
         if tags is not None:
             if isinstance(tags, int):
                 tags = [tags]
-            sql_query += " where tags::int[] @> (%s)"
+            sql_query += " where tags @> array[%s]::text[]"
             params = (tags, )
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:

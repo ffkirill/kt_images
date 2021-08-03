@@ -1,3 +1,4 @@
+from typing import List
 import argparse
 from os import environ
 from pathlib import Path
@@ -47,13 +48,13 @@ class BaseSettings:
     app_description: str = None
     app_settings = (postgres_dsn, )
     
-    def __init__(self, argv):
+    def __init__(self, params: List[str] = None):
         parser = self.parser = argparse.ArgumentParser(
             description=self.app_description)
 
         for func in self.app_settings:
             func(parser) 
 
-        args = parser.parse_args(argv)
+        args = parser.parse_args(params or tuple())
         for k in args.__dict__.keys():
             setattr(self, k, args.__dict__[k])

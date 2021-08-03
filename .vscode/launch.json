@@ -12,7 +12,18 @@
             "module": "kt_images",
             "cwd": "${workspaceFolder}/api/src",
             "justMyCode": false,
+            "python": "${workspaceFolder}/api/.env/bin/python"
             
-        }
+        },
+        {
+            "name": "Python: KT Images OpenApi",
+            "type": "python",
+            "request": "launch",
+            "module": "aiohttp_pydantic.oas",
+            "args": ["kt_images.wsgi:app"],
+            "cwd": "${workspaceFolder}/api/src",
+            "justMyCode": false,
+            
+        },
     ]
 }

@@ -4,7 +4,6 @@ from typing import Union, Optional, List, Any
 from aiohttp import web
 from aiohttp.web_response import StreamResponse
 from aiohttp_pydantic import PydanticView
-from pydantic import Field
 from aiohttp_pydantic.oas.typing import r200, r201, r404
 
 
@@ -23,7 +22,7 @@ class HTTPStreamedException(Exception):
 
 
 class ImageCollectionView(PydanticView):
-    async def get(self, tags: Optional[Union[List[int],int]] = None) -> r200[List[Image]]:
+    async def get(self, /, tags: Optional[Union[List[str],str]] = None) -> r200[List[Image]]:
         """
         List Images entities, optionally filter by tags
         Response is streamed due to performance consideration
@@ -59,13 +58,14 @@ class ImageCollectionView(PydanticView):
     async def post(self, image: Image) -> r201[Image]:
         """Create a new image"""
         return web.json_response(
-            await self.request.app['model'].add_image(image))
+            (await self.request.app['model'].add_image(image)).dict(),
+            status=201)
 
 
 class ImageItemView(PydanticView):
-    async def get(self, image_id: int, /) -> Union[r200[Image], r404[web.HTTPNotFound]]:
+    async def get(self, image_id: int, /) -> Union[r200[Image], r404[Image]]:
         """View Image"""
-        res: Image = await self.request.app['model'].get_image(image_id)
-        if res is None:
+        image: Image = await self.request.app['model'].get_image(image_id)
+        if image is None:
             raise web.HTTPNotFound(reason=f'Image <{image_id}> is not found')
-        return web.json_response(res.dict())
+        return web.json_response(image.dict())

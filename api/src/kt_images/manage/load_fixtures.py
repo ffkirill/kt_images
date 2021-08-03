@@ -64,9 +64,10 @@ def main(argv):
         with fixture.open('r') as file:
             sql = ''.join(file.readlines())
             cur.execute(sql)
+            conn.commit()
             print(sql)
     
-    print(f'Applied {len(fixtures)} fixtures.')
+    print(f'Successfully applied {len(fixtures)} fixtures.')
     
 
 if __name__ == '__main__':

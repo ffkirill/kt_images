@@ -11,7 +11,7 @@ from kt_images.typing import KtImagesApp
 from kt_images.settings import Settings
 
 
-async def init_app(config: Settings):
+def init_app(config: Settings):
     logging.basicConfig(level=logging.DEBUG)
     app: KtImagesApp = web.Application(middlewares=[process_errors])
     app.on_startup.append(init_pg)
@@ -23,6 +23,7 @@ async def init_app(config: Settings):
 
 
 def main(argv):
+    """HTTP Service entry point"""
     config = Settings(argv)
     app = init_app(config)
     web.run_app(app, host=config.host, port=config.port)
