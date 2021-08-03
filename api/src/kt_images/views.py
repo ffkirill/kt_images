@@ -1,5 +1,5 @@
 import json
-from typing import Union, Optional, List, Any
+from typing import Union, Optional, List
 
 from aiohttp import web
 from aiohttp.web_response import StreamResponse
@@ -22,15 +22,24 @@ class HTTPStreamedException(Exception):
 
 
 class ImageCollectionView(PydanticView):
-    async def get(self, /, tags: Optional[Union[List[str],str]] = None) -> r200[List[Image]]:
+    async def get(self, /,
+        tag: str=None,
+        tags_all: Optional[List[str]] = None,
+        tags_any: Optional[List[str]] = None) -> r200[List[Image]]:
         """
         List Images entities, optionally filter by tags
         Response is streamed due to performance consideration
         See https://github.com/tolgahanuzun/Streaming_API/blob/master/chunked_app.py
         for streamed response details.
         The streamed data is followed by totals object info.
+        
+        Query params:
+          tag: Filter by single tag
+          tags_all: Filter by tags subset
+          tags_any: Filter by tags set intersection
+          If multiple kind of filters appears in query, logical "and" is applied.
         """
-        images_chunks = self.request.app['model'].list_images(tags)
+        images_chunks = self.request.app['model'].list_images(tag, tags_all, tags_any)
         response = web.StreamResponse(
             status=200,
             reason='OK',

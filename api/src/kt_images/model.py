@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -46,18 +46,34 @@ class Model:
                     cur.description)
                 return Image(**res_dict)
 
-    async def list_images(self, tags: Optional[Union[List[int], int]] = None):
+    
+    async def list_images(self, tag: Optional[str] = None,
+        tags_all: Optional[List[str]] = None, 
+        tags_any: Optional[List[str]] = None):
         """Generator that yields chunked images list as list of tuple"""
         pool = await self.app['db'].connection_pool()
         make_dict = self.app['db'].make_dict
         config: Settings = self.app['config']
-        sql_query = "select image_id, filename, tags from images"
-        params = None
-        if tags is not None:
-            if isinstance(tags, int):
-                tags = [tags]
-            sql_query += " where tags @> array[%s]::text[]"
-            params = (tags, )
+        sql_query = 'select image_id, filename, tags from images'
+        # Single tag is concatenated into tags_all list
+        if tag is not None:
+            if tags_all is None:
+                tags_all = []
+            tags_all.append(tag)
+        # Process query params values
+        params: List[str] = []
+        sql_cond = []
+        if tags_all is not None:
+            sql_cond.append("(tags @> array[%s]::text[])")
+            params.append(tags_all)
+        if tags_any is not None:
+            sql_cond.append("(tags && array[%s]::text[])")
+            params.append(tags_any)
+        # Concatenate query condition
+        if sql_cond:
+            sql_query += ' where '
+            sql_query += ' and '.join(sql_cond)
+        # Fetch data
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
                 cur.arraysize = config.pg_arraysize
@@ -65,6 +81,7 @@ class Model:
                 while True:
                     chunk = await cur.fetchmany()
                     if chunk:
+                        # Yield chunk as list of dict
                         yield [make_dict(res, cur.description) for res in chunk]
                     else:
                         break

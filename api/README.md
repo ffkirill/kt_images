@@ -46,7 +46,7 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   >['00_drop-tables.sql', '01_ddl.sql', '02_create-index.sql']
 
   - Применим все fixtures. Инициалзация начинается с drop tables
-  
+
   `root# docker-compose exec -T api python3 -m kt_images.manage.load_fixtures --apply_all`
   
 
@@ -72,13 +72,25 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   >201
 
 
-  - Проверка (поиск по тегу)
+  - Поиск по тегам
+  Варианты использования:
+    * tag=...
+    * tags_all=...&tags_all=...
+    * tags_any=...&tags_any=...
 
-  `curl -X GET http://localhost:8080/images?tags=canon -w %{http_code}`
+  `curl -X GET http://localhost:8080/images?tag=canon -w %{http_code}`
+  >[[{"image_id": 1, "filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}], {"totalImages": 1, "totalChunks": 1}]
+  >200
+  
+  `curl -X GET http://localhost:8080/images?tags_all=canon&tags_all=jpeg -w %{http_code}`
   >[[{"image_id": 1, "filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}], {"totalImages": 1, "totalChunks": 1}]
   >200
 
-  `curl -X GET http://localhost:8080/images?tags=canon2 -w %{http_code}`
+   `curl -X GET http://localhost:8080/images?tags_any=canon&tags_any=nikon -w %{http_code}`
+  >[[{"image_id": 1, "filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}], {"totalImages": 1, "totalChunks": 1}]
+  >200
+
+  `curl -X GET http://localhost:8080/images?tag=canon2 -w %{http_code}`
   >[{"totalImages": 0, "totalChunks": 0}]
   >200
   
