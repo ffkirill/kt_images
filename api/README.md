@@ -30,6 +30,7 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   ### Выполняем сборку контейнеров и старт:
 
   `root# docker-compose build`
+
   `root# docker-compose up`
 
 
@@ -45,15 +46,19 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   >['00_drop-tables.sql', '01_ddl.sql', '02_create-index.sql']
 
   - Применим все fixtures. Инициалзация начинается с drop tables
+  
   `root# docker-compose exec -T api python3 -m kt_images.manage.load_fixtures --apply_all`
   
 
   ## Работа с API
   ### Получение JSON-схемы API
-  root# docker-compose exec -T api python3 -m aiohttp_pydantic.oas kt_images.wsgi:app
+
+  `root# docker-compose exec -T api python3 -m aiohttp_pydantic.oas kt_images.wsgi:app`
   TODO: отразить amounts
 
+
   ### Получение списка изображений через curl
+
   `user$  curl -X GET http://localhost:8080/images`
   > [{"totalImages": 0, "totalChunks": 0}]`
 
@@ -61,11 +66,14 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   ### Загрузка изображения, поиск по тегам, просмотр
 
   - Загрузка метаданных
+
   `curl -H "Content-Type: application/json" -X POST http://localhost:8080/images --data '{"filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}' -w %{http_code}`
   >{"image_id": 19, "filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}
   >201
 
+
   - Проверка (поиск по тегу)
+
   `curl -X GET http://localhost:8080/images?tags=canon -w %{http_code}`
   >[[{"image_id": 1, "filename": "example.jpg", "tags": ["example_1", "jpeg", "canon"]}], {"totalImages": 1, "totalChunks": 1}]
   >200
@@ -74,7 +82,9 @@ chunk'ам в поточном режиме, размер chunk'а устана�
   >[{"totalImages": 0, "totalChunks": 0}]
   >200
   
+
   - Запрос одного изображения
+
   `curl -X GET http://localhost:8080/images/1 -w %{http_code}`
   >[{"totalImages": 0, "totalChunks": 0}]
   >200
@@ -83,6 +93,7 @@ chunk'ам в поточном режиме, размер chunk'а устана�
    `curl -X GET http://localhost:8080/images/22 -w %{http_code}`
   >{"error": "Image <22> is not found"}
   >404
+ 
  
   - Загрузка файла изображения
   TODO: Написать поточный загрузчик через POST
