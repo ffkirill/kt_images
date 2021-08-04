@@ -5,5 +5,6 @@ class Settings(settings.BaseSettings):
     app_settings = (
         settings.api_endpoint,
         settings.postgres_dsn,
-        settings.postgres_arraysize
+        settings.postgres_arraysize,
+        settings.uploads_dir
     )

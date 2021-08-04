@@ -1,6 +1,5 @@
 from typing import Tuple, Any
 
-from aiohttp import web
 from aiopg import create_pool
 
 
@@ -8,8 +7,8 @@ class DbError(Exception):
     pass
 
 
-class PgService:
-    """DB Service. Encapsulates connection pool creation"""
+class PgDataBaseConnector:
+    """DB Connector. Encapsulates connection pool creation"""
     _pool = None
     dsn: str = None
 
@@ -26,12 +25,7 @@ class PgService:
             self._pool = await create_pool(self.dsn)
         return self._pool
 
-
-async def init_pg(app: web.Application):
-    app['db'] = PgService(app['config'].pg_dsn)
-
-
-async def close_pg(app: web.Application):
-    if app['db']._pool:
-        app['db']._pool.close()
-        await app['db']._pool.wait_closed()
+    async def release_storage(self, app):
+        if self._pool:
+            self._pool.close()
+            await self._pool.wait_closed()

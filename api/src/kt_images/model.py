@@ -1,9 +1,15 @@
-from typing import List, Optional
+from typing import AsyncIterable, List, Optional
 
 from pydantic import BaseModel
+from kt_images.db import PgDataBaseConnector
 
 from kt_images.settings import Settings
-from kt_images.typing import KtImagesApp
+
+
+class Error(BaseModel):
+    """Error message `{"error": "reason"}`"""
+    error: str
+
 
 class Image(BaseModel):
     """Image entity dataclass"""
@@ -12,27 +18,42 @@ class Image(BaseModel):
     tags: List[str] = []
 
 
-class Model:
-    """Images entities model"""
-    app: KtImagesApp = None
+class ImageUpload(BaseModel):
+    filename: str
+    file: None
 
-    def __init__(self, app):
-        self.app = app
+
+class Repository:
+    """
+    Model instances repository
+    """
+    _connector: PgDataBaseConnector = None
+    config: Settings = None
+
+    def __init__(self, connector: PgDataBaseConnector, config: Settings):
+        self._connector = connector
+        self.config = config
 
     async def add_image(self, image: Image) -> Image:
-        pool = await self.app['db'].connection_pool()
+        """
+        Saves image instance to repo
+        """
+        pool = await self._connector.connection_pool()
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
                     'insert into images (filename, tags) values (%s, %s) returning image_id, filename, tags;',
                     (image.filename, image.tags))
-                res_dict = self.app['db'].make_dict(
+                res_dict = self._connector.make_dict(
                     await cur.fetchone(),
                     cur.description)
                 return Image(**res_dict)
 
     async def get_image(self, image_id: int) -> Optional[Image]:
-        pool = await self.app['db'].connection_pool()
+        """
+        Returns image instance from repo
+        """
+        pool = await self._connector.connection_pool()
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
@@ -41,7 +62,7 @@ class Model:
                 res = await cur.fetchone()
                 if res is None:
                     return
-                res_dict = self.app['db'].make_dict(
+                res_dict = self._connector.make_dict(
                     res,
                     cur.description)
                 return Image(**res_dict)
@@ -49,11 +70,12 @@ class Model:
     
     async def list_images(self, tag: Optional[str] = None,
         tags_all: Optional[List[str]] = None, 
-        tags_any: Optional[List[str]] = None):
-        """Generator that yields chunked images list as list of tuple"""
-        pool = await self.app['db'].connection_pool()
-        make_dict = self.app['db'].make_dict
-        config: Settings = self.app['config']
+        tags_any: Optional[List[str]] = None) -> AsyncIterable[List[List[dict]]]:
+        """
+        Generator that yields chunked images list as list of dict
+        """
+        pool = await self._connector.connection_pool()
+        make_dict = self._connector.make_dict
         sql_query = 'select image_id, filename, tags from images'
         # Single tag is concatenated into tags_all list
         if tag is not None:
@@ -76,7 +98,7 @@ class Model:
         # Fetch data
         async with pool.acquire() as conn:
             async with conn.cursor() as cur:
-                cur.arraysize = config.pg_arraysize
+                cur.arraysize = self.config.pg_arraysize
                 await cur.execute(sql_query, params)
                 while True:
                     chunk = await cur.fetchmany()

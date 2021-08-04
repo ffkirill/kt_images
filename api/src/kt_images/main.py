@@ -1,29 +1,24 @@
 import logging
 from aiohttp import web
 
-from kt_images.db import init_pg, close_pg
-
-from kt_images.routes import setup_routes
-from kt_images.model import Model
 from kt_images.settings import Settings
 from kt_images.middleware import process_errors
-from kt_images.typing import KtImagesApp
 from kt_images.settings import Settings
+from kt_images.application import KtImagesWebApp
 
 
-def init_app(config: Settings):
+def init_app(settings: Settings):
+    """Create app, setup dependencies"""
     logging.basicConfig(level=logging.DEBUG)
-    app: KtImagesApp = web.Application(middlewares=[process_errors])
-    app.on_startup.append(init_pg)
-    app.on_cleanup.append(close_pg)
-    app['config'] = config
-    app['model'] = Model(app)
-    setup_routes(app)
+    app: KtImagesWebApp = KtImagesWebApp(middlewares=[process_errors])
+    app.settings = settings
+    app.setup_repo()
+    app.setup_routes()
     return app
 
 
 def main(argv):
     """HTTP Service entry point"""
-    config = Settings(argv)
-    app = init_app(config)
-    web.run_app(app, host=config.host, port=config.port)
+    settings = Settings(argv)
+    app = init_app(settings)
+    web.run_app(app, host=settings.host, port=settings.port)

@@ -9,6 +9,7 @@ POSTGRES_FETCHMANY_ARRAYSIZE = 10
 
 BASE_DIR = Path(__file__).parent
 FIXTURES_DIR = BASE_DIR / 'fixtures'
+UPLOADS_DIR = Path('/var/kt_images')
 
 def env(key: str, default: str):
     return environ.get(key, default)
@@ -35,6 +36,12 @@ def api_endpoint(parser: argparse.ArgumentParser):
             default=env('KT_IMAGES_DEMO_PORT',
                         8080))
 
+def uploads_dir(parser: argparse.ArgumentParser):
+    parser.add_argument('--uploads_dir', dest='uploads_dir', type=Path,
+      help='image uploads',
+      default=env('KT_IMAGES_UPLOAD_DIR', UPLOADS_DIR))
+
+
 class BaseSettings:
     """
     Base Command line arguments parser, defaults are taken from env
@@ -44,6 +51,7 @@ class BaseSettings:
     port: int
     pg_dsn: str
     pg_arraysize: int
+    uploads_dir: str
     parser: argparse.ArgumentParser
     app_description: str = None
     app_settings = (postgres_dsn, )
